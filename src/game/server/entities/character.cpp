@@ -2017,11 +2017,7 @@ void CCharacter::HandleTuneLayer()
 	m_TuneZoneOld = m_TuneZone;
 	int CurrentIndex = Collision()->GetMapIndex(m_Pos);
 	m_TuneZone = Collision()->IsTune(CurrentIndex);
-
-	if(m_TuneZone)
-		m_Core.m_Tuning = TuningList()[m_TuneZone]; // throw tunings from specific zone into gamecore
-	else
-		m_Core.m_Tuning = *Tuning();
+	m_Core.m_Tuning = TuningList()[m_TuneZone]; // throw tunings from specific zone into gamecore
 
 	if(m_TuneZone != m_TuneZoneOld) // don't send tunigs all the time
 	{
