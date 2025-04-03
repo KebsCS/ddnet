@@ -805,6 +805,49 @@ void CPlayers::RenderPlayer(
 		Graphics()->QuadsSetRotation(0);
 	}
 
+	if(m_pClient->m_aClients[ClientId].m_LastMessageStart)
+	{
+		int64_t Now = time();
+		if(Now - m_pClient->m_aClients[ClientId].m_LastMessageStart < time_freq() * 3)
+		{
+			const char *text = m_pClient->m_aClients[ClientId].m_aLastMessageText;
+			float FontSize = 16.f;
+			float TextWidth = TextRender()->TextWidth(FontSize, text, -1); // -1 for null-terminated string
+
+			// Define padding for the rectangle
+			float Padding = 10.f; // Adjust as necessary for visual appeal
+			float BubbleLength = 130.f; // Maximum width of the rectangle
+
+			// Calculate the effective width, limiting it to BubbleLength
+			float Width = minimum(TextWidth + Padding * 2, BubbleLength); // Limit the width
+			float Height = FontSize + Padding;
+
+			// Center the rectangle
+			float RectX = Position.x;
+			float OffsetY = 30.f;
+			float RectY = Position.y - OffsetY - Height; // Centering Y
+
+			// Draw the rectangle
+			Graphics()->TextureClear();
+			Graphics()->QuadsBegin();
+			Graphics()->SetColor(1.f, 1.f, 1.f, 0.3f);
+			Graphics()->DrawRectExt(RectX, RectY, Width, Height, 5.f, IGraphics::CORNER_ALL);
+			Graphics()->QuadsEnd();
+
+			CTextCursor Cursor;
+
+			// Calculate the actual text width to use for centering
+			float ActualTextWidth = minimum(TextWidth, BubbleLength - Padding * 2); // Use the limited text width
+			float TextCursorX = RectX + (Width - ActualTextWidth) / 2; 
+			// Set cursor position for rendering
+			TextRender()->SetCursor(&Cursor, TextCursorX, Position.y - OffsetY - Padding*2, FontSize, TEXTFLAG_RENDER | TEXTFLAG_ELLIPSIS_AT_END);
+			Cursor.m_LineWidth = Width - Padding * 2; // Set line width for ellipsis handling
+
+			TextRender()->TextEx(&Cursor, text);
+
+		}
+	}
+
 	if(g_Config.m_ClShowEmotes && !m_pClient->m_aClients[ClientId].m_EmoticonIgnore && m_pClient->m_aClients[ClientId].m_EmoticonStartTick != -1)
 	{
 		float SinceStart = (Client()->GameTick(g_Config.m_ClDummy) - m_pClient->m_aClients[ClientId].m_EmoticonStartTick) + (Client()->IntraGameTickSincePrev(g_Config.m_ClDummy) - m_pClient->m_aClients[ClientId].m_EmoticonStartFraction);

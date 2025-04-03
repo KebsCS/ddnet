@@ -471,6 +471,9 @@ public:
 		bool m_Paused;
 		bool m_Spec;
 
+		char m_aLastMessageText[256];
+		int64_t m_LastMessageStart;
+
 		// Editor allows 256 switches for now.
 		bool m_aSwitchStates[256];
 

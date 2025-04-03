@@ -2730,6 +2730,9 @@ void CGameClient::CClientData::Reset()
 	m_Paused = false;
 	m_Spec = false;
 
+	m_aLastMessageText[0] = '\0';
+	m_LastMessageStart = 0;
+
 	std::fill(std::begin(m_aSwitchStates), std::end(m_aSwitchStates), 0);
 
 	m_Snapped.m_Tick = -1;
