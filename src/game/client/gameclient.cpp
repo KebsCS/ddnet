@@ -1119,6 +1119,18 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 		// reset character prediction
 		if(!(m_GameWorld.m_WorldConfig.m_IsFNG && pMsg->m_Weapon == WEAPON_LASER))
 		{
+			// update saved strong/weak ids if our character isn't on screen
+			for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+			{
+				if(m_aLocalIds[Dummy] != -1)
+				{
+					if(pMsg->m_Victim == m_aLocalIds[Dummy])
+						m_aLocalStrongWeakId[Dummy] = 0;
+					if(m_CharOrder.HasStrongAgainst(m_aLocalIds[Dummy], pMsg->m_Victim))
+						m_aLocalStrongWeakId[Dummy]++;
+				}
+			}
+
 			m_CharOrder.GiveWeak(pMsg->m_Victim);
 			if(CCharacter *pChar = m_GameWorld.GetCharacterById(pMsg->m_Victim))
 				pChar->ResetPrediction();
@@ -1160,6 +1172,18 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 		{
 			if(m_Teams.Team(i) == pMsg->m_Team)
 			{
+				// update saved strong/weak ids if our character isn't on screen
+				for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
+				{
+					if(m_aLocalIds[Dummy] != -1)
+					{
+						if(i == m_aLocalIds[Dummy])
+							m_aLocalStrongWeakId[Dummy] = 0;
+						if(m_CharOrder.HasStrongAgainst(m_aLocalIds[Dummy], i))
+							m_aLocalStrongWeakId[Dummy]++;
+					}
+				}
+
 				if(CCharacter *pChar = m_GameWorld.GetCharacterById(i))
 				{
 					pChar->ResetPrediction();
