@@ -29,6 +29,7 @@ public:
 class IMapImages
 {
 public:
+	virtual ~IMapImages() = default;
 	virtual IGraphics::CTextureHandle Get(int Index) const = 0;
 	virtual int Num() const = 0;
 	// DDRace
