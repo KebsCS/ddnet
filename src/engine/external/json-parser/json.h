@@ -172,11 +172,11 @@ typedef struct _json_value
 
       public:
 
-         inline _json_value ()
+         _json_value ()
          {  memset (this, 0, sizeof (_json_value));
          }
 
-         inline const struct _json_value &operator [] (int index) const
+         const struct _json_value &operator [] (int index) const
          {
             if (type != json_array || index < 0
                      || ((unsigned int) index) >= u.array.length)
@@ -187,7 +187,7 @@ typedef struct _json_value
             return *u.array.values [index];
          }
 
-         inline const struct _json_value &operator [] (const char * index) const
+         const struct _json_value &operator [] (const char * index) const
          { 
             if (type != json_object)
                return json_value_none;
@@ -199,7 +199,7 @@ typedef struct _json_value
             return json_value_none;
          }
 
-         inline operator const char * () const
+         operator const char * () const
          {  
             switch (type)
             {
@@ -211,7 +211,7 @@ typedef struct _json_value
             };
          }
 
-         inline operator json_int_t () const
+         operator json_int_t () const
          {  
             switch (type)
             {
@@ -226,7 +226,7 @@ typedef struct _json_value
             };
          }
 
-         inline operator bool () const
+         operator bool () const
          {  
             if (type != json_boolean)
                return false;
@@ -234,7 +234,7 @@ typedef struct _json_value
             return u.boolean != 0;
          }
 
-         inline operator double () const
+         operator double () const
          {  
             switch (type)
             {
