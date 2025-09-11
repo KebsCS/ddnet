@@ -95,6 +95,7 @@ Checks: >
   -readability-suspicious-call-argument,
   -readability-uppercase-literal-suffix,
   -readability-use-std-min-max,
+  -readability-identifier-naming,
   performance-*,
   -performance-enum-size,
   -performance-no-int-to-ptr,
