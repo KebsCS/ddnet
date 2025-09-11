@@ -8,6 +8,8 @@
 #undef KEY_EXECUTE
 #endif
 
+// NOLINTBEGIN(misc-confusable-identifiers)
+
 enum EKey
 {
 	KEY_UNKNOWN = 0,
@@ -341,5 +343,7 @@ enum EKey
 	NUM_JOYSTICK_BUTTONS_PER_HAT = KEY_JOY_HAT0_RIGHT - KEY_JOY_HAT0_UP + 1,
 	NUM_JOYSTICK_HATS = 2,
 };
+
+// NOLINTEND(misc-confusable-identifiers)
 
 #endif
