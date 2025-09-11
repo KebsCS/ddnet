@@ -37,6 +37,7 @@ Checks: >
   -bugprone-switch-missing-default-case,
   -bugprone-unchecked-optional-access,
   -bugprone-unhandled-self-assignment,
+  -bugprone-crtp-constructor-accessibility,
   clang-analyzer-*,
   -clang-analyzer-optin.cplusplus.UninitializedObject,
   -clang-analyzer-optin.cplusplus.VirtualCall,
