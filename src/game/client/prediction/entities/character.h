@@ -137,8 +137,7 @@ public:
 
 private:
 	// weapon info
-	int m_aHitObjects[10];
-	int m_NumObjectsHit;
+	std::vector<int> m_vHitObjects;
 
 	int m_LastWeapon;
 	int m_QueuedWeapon;

@@ -120,8 +120,7 @@ private:
 	int m_NeededFaketuning;
 
 	// weapon info
-	CEntity *m_apHitObjects[10];
-	int m_NumObjectsHit;
+	std::vector<int> m_vHitObjects;
 
 	int m_LastWeapon;
 	int m_QueuedWeapon;

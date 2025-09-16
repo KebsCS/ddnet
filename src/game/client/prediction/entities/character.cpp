@@ -152,32 +152,27 @@ void CCharacter::HandleNinja()
 				if(Team() != pChr->Team())
 					continue;
 
+				const int ClientId = pChr->GetCid();
+
 				// Don't hit players in solo parts
-				if(TeamsCore()->GetSolo(pChr->GetCid()))
+				if(TeamsCore()->GetSolo(ClientId))
 					return;
 
 				// make sure we haven't Hit this object before
-				bool AlreadyHit = false;
-				for(int j = 0; j < m_NumObjectsHit; j++)
+				if(std::find(m_vHitObjects.begin(), m_vHitObjects.end(), ClientId) != m_vHitObjects.end())
 				{
-					if(m_aHitObjects[j] == pChr->GetCid())
-						AlreadyHit = true;
-				}
-				if(AlreadyHit)
 					continue;
+				}
 
 				// check so we are sufficiently close
-				if(distance(pChr->m_Pos, m_Pos) > (m_ProximityRadius * 2.0f))
+				if(distance(pChr->m_Pos, m_Pos) > Radius)
 					continue;
 
 				// Hit a player, give them damage and stuffs...
 				// set his velocity to fast upward (for now)
-				if(m_NumObjectsHit < 10)
-					m_aHitObjects[m_NumObjectsHit++] = pChr->GetCid();
+				m_vHitObjects.emplace_back(ClientId);
 
-				CCharacter *pChar = GameWorld()->GetCharacterById(pChr->GetCid());
-				if(pChar)
-					pChar->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, GetCid(), WEAPON_NINJA);
+				pChr->TakeDamage(vec2(0, -10.0f), g_pData->m_Weapons.m_Ninja.m_pBase->m_Damage, GetCid(), WEAPON_NINJA);
 			}
 		}
 
@@ -294,9 +289,6 @@ void CCharacter::FireWeapon()
 	{
 	case WEAPON_HAMMER:
 	{
-		// reset objects Hit
-		m_NumObjectsHit = 0;
-
 		if(m_Core.m_HammerHitDisabled)
 			break;
 
@@ -445,7 +437,7 @@ void CCharacter::FireWeapon()
 	case WEAPON_NINJA:
 	{
 		// reset Hit objects
-		m_NumObjectsHit = 0;
+		m_vHitObjects.clear();
 
 		m_Core.m_Ninja.m_ActivationDir = Direction;
 		m_Core.m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * GameWorld()->GameTickSpeed() / 1000;
@@ -1245,7 +1237,6 @@ CCharacter::CCharacter(CGameWorld *pGameWorld, int Id, CNetObj_Character *pChar,
 	mem_zero(&m_Core.m_Ninja, sizeof(m_Core.m_Ninja));
 	m_Core.m_LeftWall = true;
 	m_ReloadTimer = 0;
-	m_NumObjectsHit = 0;
 	m_LastRefillJumps = false;
 	m_CanMoveInFreeze = false;
 	m_TeleCheckpoint = 0;
