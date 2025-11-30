@@ -110,6 +110,37 @@ public:
 
 	bool EmulateBug(int Bug) const;
 
+	class PredictedSound
+	{
+	public:
+		int m_SoundId;
+		vec2 m_Pos;
+		int m_Tick;
+		bool m_Played = false;
+		PredictedSound(vec2 Pos, int Id, int Tick) :
+			m_SoundId(Id), m_Pos(Pos), m_Tick(Tick)
+		{
+		}
+	};
+
+	std::vector<PredictedSound> m_PredictedSounds;
+
+	void AddPredictedSound(vec2 Pos, int Id, int Tick)
+	{
+		// prediction is ran multiple times per tick, check first if its not already added
+		auto it = std::find_if(
+			m_PredictedSounds.begin(),
+			m_PredictedSounds.end(),
+			[Id, Pos, Tick](const PredictedSound &Sound) {
+				return Sound.m_SoundId == Id && Sound.m_Pos == Pos && Sound.m_Tick == Tick;
+			});
+
+		if(it == m_PredictedSounds.end())
+		{
+			m_PredictedSounds.push_back(PredictedSound(Pos, Id, Tick));
+		}
+	}
+
 private:
 	void RemoveEntities();
 

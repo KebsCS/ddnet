@@ -1414,7 +1414,27 @@ void CGameClient::ProcessEvents()
 			if(m_GameInfo.m_RaceSounds && ((pEvent->m_SoundId == SOUND_GUN_FIRE && !g_Config.m_SndGun) || (pEvent->m_SoundId == SOUND_PLAYER_PAIN_LONG && !g_Config.m_SndLongPain)))
 				continue;
 
-			m_Sounds.PlayAt(CSounds::CHN_WORLD, pEvent->m_SoundId, 1.0f, vec2(pEvent->m_X, pEvent->m_Y));
+			vec2 SoundPos = vec2(pEvent->m_X, pEvent->m_Y);
+
+			auto it = std::find_if(
+				m_PredictedWorld.m_PredictedSounds.begin(),
+				m_PredictedWorld.m_PredictedSounds.end(),
+				[&](const CGameWorld::PredictedSound &Sound) {
+					return Sound.m_Played == true && Sound.m_SoundId == pEvent->m_SoundId &&
+					       Sound.m_Pos == SoundPos && Sound.m_Tick <= Client()->GameTick(g_Config.m_ClDummy);
+					// not exact tick compare, because the sound event is delayed by ping.
+					// For it to be perfect, could make new EventEx that has the tick
+				});
+
+			if(it == m_PredictedWorld.m_PredictedSounds.end())
+			{
+				m_Sounds.PlayAt(CSounds::CHN_WORLD, pEvent->m_SoundId, 1.0f, SoundPos);
+			}
+			else
+			{
+				// already played
+				m_PredictedWorld.m_PredictedSounds.erase(it);
+			}
 		}
 		else if(Item.m_Type == NETEVENTTYPE_MAPSOUNDWORLD)
 		{
@@ -2537,6 +2557,25 @@ void CGameClient::OnPredict()
 		}
 
 		m_PredictedWorld.Tick();
+
+		auto it = m_PredictedWorld.m_PredictedSounds.begin();
+		while(it != m_PredictedWorld.m_PredictedSounds.end())
+		{
+			if(!it->m_Played && it->m_Tick == Tick)
+			{
+				m_Sounds.PlayAt(CSounds::CHN_WORLD, it->m_SoundId, 1.0f, it->m_Pos);
+				it->m_Played = true;
+			}
+			else if(Tick - it->m_Tick > 1000)
+			{
+				// remove too old sounds
+				it = m_PredictedWorld.m_PredictedSounds.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
 
 		// fetch the current characters
 		if(Tick == PredictionTick)
