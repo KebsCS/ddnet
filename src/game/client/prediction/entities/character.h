@@ -43,7 +43,7 @@ public:
 	void HandleNinja();
 	void HandleJetpack();
 
-	void OnPredictedInput(const CNetObj_PlayerInput *pNewInput);
+	void OnPredictedInput(const CNetObj_PlayerInput *pNewInput, bool Preinput = false);
 	void OnDirectInput(const CNetObj_PlayerInput *pNewInput);
 	void ReleaseHook();
 	void ResetHook();
@@ -151,6 +151,8 @@ private:
 	// these are non-heldback inputs
 	CNetObj_PlayerInput m_LatestPrevInput;
 	CNetObj_PlayerInput m_LatestInput;
+
+	CNetObj_PlayerInput m_LatestPreInput;
 
 	// input
 	CNetObj_PlayerInput m_PrevInput;

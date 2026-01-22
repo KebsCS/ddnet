@@ -2475,7 +2475,7 @@ void CGameClient::ApplyPreInputs(int Tick, bool Direct, CGameWorld &GameWorld)
 			}
 			else
 			{
-				pChar->OnPredictedInput(&Input);
+				pChar->OnPredictedInput(&Input, true);
 			}
 		}
 	}

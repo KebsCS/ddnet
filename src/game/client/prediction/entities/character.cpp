@@ -347,7 +347,10 @@ void CCharacter::FireWeapon()
 			pTarget->TakeDamage(Force, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 				GetCid(), m_Core.m_ActiveWeapon);
 			pTarget->UnFreeze();
-
+			pTarget->m_Input.m_Direction = m_LatestPreInput.m_Direction;
+			pTarget->m_Input.m_Fire = m_LatestPreInput.m_Fire;
+			pTarget->m_Input.m_Jump = m_LatestPreInput.m_Jump;
+			pTarget->m_Input.m_Hook = m_LatestPreInput.m_Hook;
 			Hits++;
 		}
 
@@ -495,7 +498,7 @@ void CCharacter::GiveNinja()
 	SetActiveWeapon(WEAPON_NINJA);
 }
 
-void CCharacter::OnPredictedInput(const CNetObj_PlayerInput *pNewInput)
+void CCharacter::OnPredictedInput(const CNetObj_PlayerInput *pNewInput, bool Preinput)
 {
 	// skip the input if chat is active
 	if(!GameWorld()->m_WorldConfig.m_BugDDRaceInput && pNewInput->m_PlayerFlags & PLAYERFLAG_CHATTING)
@@ -507,6 +510,11 @@ void CCharacter::OnPredictedInput(const CNetObj_PlayerInput *pNewInput)
 
 	// copy new input
 	mem_copy(&m_Input, pNewInput, sizeof(m_Input));
+	
+	if (Preinput)
+	{
+		mem_copy(&m_LatestPreInput, pNewInput, sizeof(m_LatestPreInput));
+	}
 
 	// it is not allowed to aim in the center
 	if(m_Input.m_TargetX == 0 && m_Input.m_TargetY == 0)
