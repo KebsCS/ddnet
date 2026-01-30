@@ -652,6 +652,9 @@ void CGameClient::OnReset()
 	m_PredictedPrevChar.Reset();
 	m_PredictedChar.Reset();
 
+	std::fill(std::begin(m_aSavedLocalCharacterValid), std::end(m_aSavedLocalCharacterValid), false);
+	std::fill(std::begin(m_aWasSpecPaused), std::end(m_aWasSpecPaused), false);
+
 	// m_Snap was cleared in InvalidateSnapshot
 
 	std::fill(std::begin(m_aLocalTuneZone), std::end(m_aLocalTuneZone), -1);
@@ -2045,6 +2048,27 @@ void CGameClient::OnNewSnapshot()
 		}
 	}
 
+	// With /spec the character is removed from the snap
+	// Restore saved data so prediction state is preserved.
+	if(m_Snap.m_LocalClientId >= 0 && !m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active)
+	{
+		const bool SpecOrPaused = m_aClients[m_Snap.m_LocalClientId].m_Spec || m_aClients[m_Snap.m_LocalClientId].m_Paused;
+		if(m_aSavedLocalCharacterValid[g_Config.m_ClDummy] && (SpecOrPaused || m_aWasSpecPaused[g_Config.m_ClDummy]))
+		{
+			m_Snap.m_aCharacters[m_Snap.m_LocalClientId] = m_aSavedLocalCharacter[g_Config.m_ClDummy];
+			m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_pPrevExtendedData = nullptr;
+		}
+		else
+		{
+			m_aSavedLocalCharacterValid[g_Config.m_ClDummy] = false;
+		}
+		m_aWasSpecPaused[g_Config.m_ClDummy] = SpecOrPaused;
+	}
+	else
+	{
+		m_aWasSpecPaused[g_Config.m_ClDummy] = false;
+	}
+
 	if(!FoundGameInfoEx)
 	{
 		m_GameInfo = GetGameInfo(nullptr, 0, &ServerInfo);
@@ -2063,6 +2087,14 @@ void CGameClient::OnNewSnapshot()
 		CSnapState::CCharacterInfo *pChr = &m_Snap.m_aCharacters[m_Snap.m_LocalClientId];
 		if(pChr->m_Active)
 		{
+			// save last received snap for restoring it during /spec
+			if(Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_CHARACTER, m_Snap.m_LocalClientId))
+			{
+				m_aSavedLocalCharacter[g_Config.m_ClDummy] = *pChr;
+				m_aSavedLocalCharacter[g_Config.m_ClDummy].m_Prev = pChr->m_Cur;
+				m_aSavedLocalCharacterValid[g_Config.m_ClDummy] = true;
+			}
+
 			if(!m_Snap.m_SpecInfo.m_Active)
 			{
 				m_Snap.m_pLocalCharacter = &pChr->m_Cur;
@@ -3433,7 +3465,8 @@ void CGameClient::UpdatePrediction()
 	if(!m_Snap.m_pLocalCharacter)
 	{
 		// When paused, character is still in the world, don't destroy it so prediction can keep running
-		const bool LocalPlayerPausedInWorld = m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active && m_aClients[m_Snap.m_LocalClientId].m_Paused;
+		const bool LocalPlayerPausedInWorld = m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active &&
+						      (m_aClients[m_Snap.m_LocalClientId].m_Paused || m_aClients[m_Snap.m_LocalClientId].m_Spec);
 		if(!LocalPlayerPausedInWorld)
 		{
 			if(CCharacter *pLocalChar = m_GameWorld.GetCharacterById(m_Snap.m_LocalClientId))
@@ -3485,7 +3518,8 @@ void CGameClient::UpdatePrediction()
 	}
 
 	// advance the gameworld to the current gametick
-	if(pLocalChar && absolute(m_GameWorld.GameTick() - Client()->GameTick(g_Config.m_ClDummy)) < Client()->GameTickSpeed())
+	// Skip during /spec — server doesn't tick the character either.
+	if(pLocalChar && !m_aClients[m_Snap.m_LocalClientId].m_Spec && absolute(m_GameWorld.GameTick() - Client()->GameTick(g_Config.m_ClDummy)) < Client()->GameTickSpeed())
 	{
 		for(int Tick = m_GameWorld.GameTick() + 1; Tick <= Client()->GameTick(g_Config.m_ClDummy); Tick++)
 		{
