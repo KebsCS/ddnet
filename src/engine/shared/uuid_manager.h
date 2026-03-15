@@ -1,6 +1,7 @@
 #ifndef ENGINE_SHARED_UUID_MANAGER_H
 #define ENGINE_SHARED_UUID_MANAGER_H
 
+#include <compare>
 #include <vector>
 
 enum
@@ -17,9 +18,8 @@ struct CUuid
 {
 	unsigned char m_aData[16];
 
+	std::strong_ordering operator<=>(const CUuid &Other) const;
 	bool operator==(const CUuid &Other) const;
-	bool operator!=(const CUuid &Other) const;
-	bool operator<(const CUuid &Other) const;
 };
 
 extern const CUuid UUID_ZEROED;
@@ -42,7 +42,7 @@ struct CNameIndexed
 	CUuid m_Uuid;
 	int m_Id;
 
-	bool operator<(const CNameIndexed &Other) const { return m_Uuid < Other.m_Uuid; }
+	auto operator<=>(const CNameIndexed &Other) const { return m_Uuid <=> Other.m_Uuid; }
 	bool operator==(const CNameIndexed &Other) const { return m_Uuid == Other.m_Uuid; }
 };
 

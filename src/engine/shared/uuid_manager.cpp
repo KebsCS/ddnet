@@ -92,19 +92,14 @@ int ParseUuid(CUuid *pUuid, const char *pBuffer)
 	return 0;
 }
 
+std::strong_ordering CUuid::operator<=>(const CUuid &Other) const
+{
+	return mem_comp(this, &Other, sizeof(*this)) <=> 0;
+}
+
 bool CUuid::operator==(const CUuid &Other) const
 {
 	return mem_comp(this, &Other, sizeof(*this)) == 0;
-}
-
-bool CUuid::operator!=(const CUuid &Other) const
-{
-	return !(*this == Other);
-}
-
-bool CUuid::operator<(const CUuid &Other) const
-{
-	return mem_comp(this, &Other, sizeof(*this)) < 0;
 }
 
 static int GetIndex(int Id)

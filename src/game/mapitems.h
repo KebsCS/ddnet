@@ -6,6 +6,8 @@
 #include <base/color.h>
 #include <base/vmath.h>
 
+#include <compare>
+
 // layer types
 enum
 {
@@ -280,35 +282,7 @@ public:
 		return CFixedTime((int)std::round(Seconds * 1000.0f));
 	}
 
-	constexpr bool operator<(const CFixedTime &Other) const
-	{
-		return m_FixedPoint < Other.m_FixedPoint;
-	}
-
-	constexpr bool operator<=(const CFixedTime &Other) const
-	{
-		return m_FixedPoint <= Other.m_FixedPoint;
-	}
-
-	constexpr bool operator>(const CFixedTime &Other) const
-	{
-		return m_FixedPoint > Other.m_FixedPoint;
-	}
-
-	constexpr bool operator>=(const CFixedTime &Other) const
-	{
-		return m_FixedPoint >= Other.m_FixedPoint;
-	}
-
-	constexpr bool operator==(const CFixedTime &Other) const
-	{
-		return m_FixedPoint == Other.m_FixedPoint;
-	}
-
-	constexpr bool operator!=(const CFixedTime &Other) const
-	{
-		return m_FixedPoint != Other.m_FixedPoint;
-	}
+	constexpr auto operator<=>(const CFixedTime &Other) const = default;
 
 	constexpr CFixedTime operator+(const CFixedTime &Other) const
 	{

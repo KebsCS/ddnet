@@ -6,6 +6,8 @@
 #include <engine/graphics.h>
 #include <engine/shared/protocol.h>
 
+#include <compare>
+
 // do this better and nicer
 class CSkin
 {
@@ -86,7 +88,7 @@ public:
 	};
 	CSkinMetrics m_Metrics;
 
-	bool operator<(const CSkin &Other) const;
+	std::strong_ordering operator<=>(const CSkin &Other) const;
 	bool operator==(const CSkin &Other) const;
 
 	CSkin(const char *pName);

@@ -16,6 +16,7 @@
 #include <game/client/lineinput.h>
 #include <game/client/render.h>
 
+#include <compare>
 #include <vector>
 
 constexpr auto SAVES_FILE = "ddnet-saves.txt";
@@ -122,8 +123,7 @@ class CChat : public CComponent
 			str_copy(m_aHelpText, pHelpText);
 		}
 
-		bool operator<(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) < 0; }
-		bool operator<=(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) <= 0; }
+		std::strong_ordering operator<=>(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) <=> 0; }
 		bool operator==(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) == 0; }
 	};
 

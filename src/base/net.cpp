@@ -172,19 +172,14 @@ int net_addr_comp(const NETADDR *a, const NETADDR *b)
 	return a->port - b->port;
 }
 
+std::strong_ordering NETADDR::operator<=>(const NETADDR &other) const
+{
+	return net_addr_comp(this, &other) <=> 0;
+}
+
 bool NETADDR::operator==(const NETADDR &other) const
 {
 	return net_addr_comp(this, &other) == 0;
-}
-
-bool NETADDR::operator!=(const NETADDR &other) const
-{
-	return net_addr_comp(this, &other) != 0;
-}
-
-bool NETADDR::operator<(const NETADDR &other) const
-{
-	return net_addr_comp(this, &other) < 0;
 }
 
 size_t std::hash<NETADDR>::operator()(const NETADDR &Addr) const noexcept

@@ -3,6 +3,7 @@
 
 #include <base/detect.h>
 
+#include <compare>
 #include <cstdint>
 #include <ctime>
 #include <functional>
@@ -116,9 +117,8 @@ typedef struct NETADDR
 	unsigned char ip[16];
 	unsigned short port;
 
+	std::strong_ordering operator<=>(const NETADDR &other) const;
 	bool operator==(const NETADDR &other) const;
-	bool operator!=(const NETADDR &other) const;
-	bool operator<(const NETADDR &other) const;
 } NETADDR;
 
 template<>

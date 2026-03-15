@@ -116,14 +116,14 @@ void CSkin::CSkinMetrics::Reset()
 	m_Feet.Reset();
 }
 
-bool CSkin::operator<(const CSkin &Other) const
+std::strong_ordering CSkin::operator<=>(const CSkin &Other) const
 {
-	return str_comp(m_aName, Other.m_aName) < 0;
+	return str_comp(m_aName, Other.m_aName) <=> 0;
 }
 
 bool CSkin::operator==(const CSkin &Other) const
 {
-	return !str_comp(m_aName, Other.m_aName);
+	return str_comp(m_aName, Other.m_aName) == 0;
 }
 
 CSkin::CSkin(const char *pName)
