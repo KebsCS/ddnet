@@ -11,6 +11,7 @@
 #include <game/client/laser_data.h>
 #include <game/collision.h>
 #include <game/mapitems.h>
+#include <game/random_hash.h>
 
 CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Type) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
@@ -23,6 +24,9 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Dir = Direction;
 	m_Bounces = 0;
 	m_EvalTick = 0;
+	m_FireTick = GameWorld()->GameTick();
+	m_TelePos = vec2(0, 0);
+	m_WasTele = false;
 	m_Type = Type;
 	m_ZeroEnergyBounceInLastTick = false;
 	m_TuneZone = GameWorld()->m_WorldConfig.m_UseTuneZones ? Collision()->IsTune(Collision()->GetMapIndex(m_Pos)) : 0;
@@ -36,7 +40,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	vec2 At;
 	CCharacter *pOwnerChar = GameWorld()->GetCharacterById(m_Owner);
 	CCharacter *pHit;
-	bool DontHitSelf = (GameWorld()->m_WorldConfig.m_OldLaser || !GameWorld()->m_WorldConfig.m_IsDDRace) || (m_Bounces == 0);
+	bool DontHitSelf = (GameWorld()->m_WorldConfig.m_OldLaser || !GameWorld()->m_WorldConfig.m_IsDDRace) || (m_Bounces == 0 && !m_WasTele);
 
 	if(pOwnerChar ? (!pOwnerChar->LaserHitDisabled() && m_Type == WEAPON_LASER) || (!pOwnerChar->ShotgunHitDisabled() && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
 		pHit = GameWorld()->IntersectCharacter(m_Pos, To, 0.f, At, DontHitSelf ? pOwnerChar : nullptr, m_Owner);
@@ -106,9 +110,18 @@ void CLaser::DoBounce()
 	vec2 Coltile;
 
 	int Res;
+	int Tele;
+
+	if(m_WasTele)
+	{
+		m_PrevPos = m_TelePos;
+		m_Pos = m_TelePos;
+		m_TelePos = vec2(0, 0);
+	}
+
 	vec2 To = m_Pos + m_Dir * m_Energy;
 
-	Res = Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To);
+	Res = Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To, &Tele);
 
 	if(Res)
 	{
@@ -147,7 +160,26 @@ void CLaser::DoBounce()
 			}
 			m_ZeroEnergyBounceInLastTick = Distance == 0.0f;
 
-			m_Bounces++;
+			// teleporters can only be predicted if the server tells us how it picks the teleporter outs
+			const int RngSeed = GameWorld()->m_Core.m_RngSeed;
+			if(RngSeed >= 0 && Res == TILE_TELEINWEAPON && !Collision()->TeleOuts(Tele - 1).empty())
+			{
+				// Must match the server's CLaser::DoBounce
+				const int NumTeleOuts = Collision()->TeleOuts(Tele - 1).size();
+				const int MapIndex = Collision()->GetPureMapIndex(Coltile);
+				int TeleOut;
+				if(m_Owner >= 0)
+					TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::LASER_TELEPORT, {m_Owner, m_FireTick, GameWorld()->GameTick(), MapIndex});
+				else
+					TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::UNOWNED_LASER_TELEPORT, {m_Id, GameWorld()->GameTick(), MapIndex});
+				m_TelePos = Collision()->TeleOuts(Tele - 1)[TeleOut];
+				m_WasTele = true;
+			}
+			else
+			{
+				m_Bounces++;
+				m_WasTele = false;
+			}
 
 			int BounceNum = GetTuning(m_TuneZone)->m_LaserBounceNum;
 
@@ -192,6 +224,10 @@ CLaser::CLaser(CGameWorld *pGameWorld, int Id, const CLaserData *pLaser) :
 	m_Layer = m_Number > 0 ? LAYER_SWITCH : LAYER_GAME;
 	m_From = pLaser->m_From;
 	m_EvalTick = pLaser->m_StartTick;
+	// Unknown, but lasers from the snapshot are only used to match predicted lasers
+	m_FireTick = pLaser->m_StartTick;
+	m_TelePos = vec2(0, 0);
+	m_WasTele = false;
 	m_TuneZone = GameWorld()->m_WorldConfig.m_UseTuneZones ? Collision()->IsTune(Collision()->GetMapIndex(m_Pos)) : 0;
 	m_Owner = -2;
 	m_Energy = GetTuning(m_TuneZone)->m_LaserReach;

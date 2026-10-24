@@ -38,6 +38,7 @@ CProjectileData ExtractProjectileInfo(int NetObjType, const void *pData, CGameWo
 	Result.m_StartVel.y = pProj->m_VelY / 100.0f;
 	Result.m_Type = pProj->m_Type;
 	Result.m_StartTick = pProj->m_StartTick;
+	Result.m_FireTick = pProj->m_StartTick;
 	Result.m_ExtraInfo = false;
 	Result.m_Owner = -1;
 	Result.m_TuneZone = pGameWorld && pGameWorld->m_WorldConfig.m_UseTuneZones ? pGameWorld->Collision()->IsTune(pGameWorld->Collision()->GetMapIndex(Result.m_StartPos)) : 0;
@@ -56,6 +57,7 @@ CProjectileData ExtractProjectileInfoDDRace(const CNetObj_DDRaceProjectile *pPro
 	Result.m_StartVel.y = std::cos(-Angle);
 	Result.m_Type = pProj->m_Type;
 	Result.m_StartTick = pProj->m_StartTick;
+	Result.m_FireTick = pProj->m_StartTick;
 
 	Result.m_ExtraInfo = true;
 	Result.m_Owner = pProj->m_Data & 255;
@@ -86,6 +88,8 @@ CProjectileData ExtractProjectileInfoDDNet(const CNetObj_DDNetProjectile *pProj)
 
 	Result.m_Type = pProj->m_Type;
 	Result.m_StartTick = pProj->m_StartTick;
+	// Servers from before this field was added send -1
+	Result.m_FireTick = pProj->m_FireTick >= 0 ? pProj->m_FireTick : pProj->m_StartTick;
 
 	Result.m_ExtraInfo = true;
 	Result.m_Owner = pProj->m_Owner;

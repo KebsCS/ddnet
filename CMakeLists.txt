@@ -2454,6 +2454,8 @@ set_src(GAME_SHARED GLOB src/game
   prng.cpp
   prng.h
   race_state.h
+  random_hash.cpp
+  random_hash.h
   team_state.h
   teamscore.cpp
   teamscore.h
@@ -3477,6 +3479,7 @@ if((GTEST_FOUND OR DOWNLOAD_GTEST) AND SERVER)
     os_test.cpp
     packer_test.cpp
     prng_test.cpp
+    random_hash_test.cpp
     replace_words_test.cpp
     score_test.cpp
     secure_random_test.cpp

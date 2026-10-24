@@ -275,6 +275,7 @@ Objects = [
 		NetIntRange("m_MinTeamSize", 0, 'MAX_CLIENTS', default=0),
 		NetIntRange("m_MaxTeamSize", 0, 'MAX_CLIENTS', default=0),
 		NetIntAny("m_NumDDRaceTeams", default=0),
+		NetIntRange("m_RngSeed", -1, 'max_int', default=-1),
 	], validate_size=False),
 
 	# The code assumes that this has the same in-memory representation as
@@ -312,6 +313,7 @@ Objects = [
 		NetIntAny("m_SwitchNumber"),
 		NetIntRange("m_TuneZone", 0, 'TuneZone::NUM-1'),
 		NetIntAny("m_Flags"),
+		NetTick("m_FireTick", default=-1),
 	]),
 
 	NetObjectEx("DDNetPickup", "pickup@netobj.ddnet.tw", [

@@ -130,6 +130,9 @@ public:
 	int m_MaxTeamSize;
 
 	int m_NumDDRaceTeams;
+
+	// -1 if the server does not send it
+	int m_RngSeed;
 };
 
 class CSnapEntities

@@ -155,6 +155,7 @@ public:
 			pCharacter = nullptr;
 		}
 		m_pPrng = nullptr;
+		m_RngSeed = -1;
 	}
 
 	int RandomOr0(int BelowThis) // NOLINT(readability-make-member-function-const)
@@ -171,6 +172,7 @@ public:
 
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
 	CPrng *m_pPrng;
+	int m_RngSeed;
 
 	void InitSwitchers(int HighestSwitchNumber);
 	std::vector<SSwitchers> m_vSwitchers;
@@ -243,6 +245,7 @@ public:
 
 	// DDRace
 	int m_Id;
+	int m_Tick;
 	bool m_Reset;
 	CCollision *Collision() { return m_pCollision; }
 
@@ -272,6 +275,8 @@ public:
 	bool m_IsInFreeze;
 	bool m_DeepFrozen;
 	bool m_LiveFrozen;
+	// Set when the character was teleported in this tick, so its position shouldn't be interpolated
+	bool m_CanSkipInterpolation;
 	CTuningParams m_Tuning;
 
 	// clientside only: antiping

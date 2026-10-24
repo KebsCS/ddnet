@@ -4121,6 +4121,8 @@ void CGameContext::OnInit(const void *pPersistentData)
 	secure_random_fill(aSeed, sizeof(aSeed));
 	m_Prng.Seed(aSeed);
 	m_World.m_Core.m_pPrng = &m_Prng;
+	// Derived from the PRNG so that it can be reproduced from the teehistorian file
+	m_World.m_Core.m_RngSeed = static_cast<int>(m_Prng.RandomBits() & 0x7fffffff);
 
 	DeleteTempfile();
 

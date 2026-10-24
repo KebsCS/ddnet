@@ -11,6 +11,8 @@
 
 #include <engine/shared/config.h>
 
+#include <game/random_hash.h>
+
 #include <limits>
 
 const char *CTuningParams::ms_apNames[] =
@@ -186,6 +188,8 @@ void CCharacterCore::Reset()
 	m_IsInFreeze = false;
 	m_DeepFrozen = false;
 	m_LiveFrozen = false;
+	m_CanSkipInterpolation = false;
+	m_Tick = 0;
 
 	// never initialize both to 0
 	m_Input.m_TargetX = 0;
@@ -196,6 +200,7 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 {
 	m_MoveRestrictions = m_pCollision->GetMoveRestrictions(UseInput ? IsSwitchActiveCb : nullptr, this, m_Pos);
 	m_TriggeredEvents = 0;
+	m_CanSkipInterpolation = false;
 
 	// get ground state
 	const bool Grounded = m_pCollision->IsOnGround(m_Pos, PhysicalSize());
@@ -321,6 +326,8 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 		if(m_NewHook)
 		{
 			HookBase = m_HookTeleBase;
+			// The client's dead reckoning doesn't know m_HookTeleBase, so it has to be reset whenever it's used
+			m_Reset = true;
 		}
 		vec2 NewPos = m_HookPos + m_HookDir * m_Tuning.m_HookFireSpeed;
 		if(distance(HookBase, NewPos) > m_Tuning.m_HookLength)
@@ -396,7 +403,7 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 				SetHookedPlayer(-1);
 
 				m_NewHook = true;
-				int RandomOut = m_pWorld->RandomOr0(m_pCollision->TeleOuts(TeleNr - 1).size());
+				int RandomOut = RandomHash::SeededRandomIntBelow(m_pCollision->TeleOuts(TeleNr - 1).size(), m_pWorld->m_RngSeed, RandomHash::ESource::HOOK_TELEPORT, {m_Id, m_Tick});
 				m_HookPos = m_pCollision->TeleOuts(TeleNr - 1)[RandomOut] + TargetDirection * PhysicalSize() * 1.5f;
 				m_HookDir = TargetDirection;
 				m_HookTeleBase = m_HookPos;

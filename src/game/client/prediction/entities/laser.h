@@ -30,9 +30,14 @@ protected:
 private:
 	vec2 m_From;
 	vec2 m_Dir;
+	vec2 m_TelePos;
+	bool m_WasTele;
 	float m_Energy;
 	int m_Bounces;
 	int m_EvalTick;
+	// Tick in which the laser was created, unlike `m_EvalTick` it doesn't change when bouncing or teleporting.
+	// Lasers in the prediction world are always fired by predicted characters, so the server doesn't need to send it.
+	int m_FireTick;
 	int m_Owner;
 	bool m_ZeroEnergyBounceInLastTick;
 

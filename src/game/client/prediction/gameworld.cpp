@@ -681,6 +681,7 @@ void CGameWorld::CopyWorld(CGameWorld *pFrom)
 	m_pMapBugs = pFrom->m_pMapBugs;
 	m_Teams = pFrom->m_Teams;
 	m_Core.m_vSwitchers = pFrom->m_Core.m_vSwitchers;
+	m_Core.m_RngSeed = pFrom->m_Core.m_RngSeed;
 	m_PredictedEvents = pFrom->m_PredictedEvents;
 	// delete the previous entities
 	Clear();

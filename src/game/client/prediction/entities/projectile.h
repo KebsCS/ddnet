@@ -47,6 +47,8 @@ private:
 	int m_SoundImpact;
 	float m_Force;
 	int m_StartTick;
+	// Tick in which the projectile was created, unlike `m_StartTick` it doesn't change when bouncing or teleporting
+	int m_FireTick;
 	bool m_Explosive;
 
 	// DDRace

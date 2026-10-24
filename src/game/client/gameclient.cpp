@@ -1639,6 +1639,7 @@ static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, 
 	Info.m_MaxTeamSize = 0;
 	Info.m_NumDDRaceTeams = 65; // `TEAM_SUPER + 1`, fallback for ddrace64 servers
 	Info.m_OldLaser = false;
+	Info.m_RngSeed = -1;
 
 	if(Version >= 0)
 	{
@@ -1715,6 +1716,8 @@ static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, 
 		const int NumDDRaceTeams = pInfoEx->m_NumDDRaceTeams;
 		Info.m_NumDDRaceTeams = NumDDRaceTeams > TEAM_FLOCK + 1 && NumDDRaceTeams <= NUM_DDRACE_TEAMS ? NumDDRaceTeams : NUM_DDRACE_TEAMS;
 		Info.m_OldLaser = Flags2 & GAMEINFOFLAG2_OLD_LASER;
+		// Servers from before this field was added send -1, so their teleporters aren't predicted
+		Info.m_RngSeed = pInfoEx->m_RngSeed;
 	}
 
 	return Info;
@@ -3537,6 +3540,7 @@ void CGameClient::UpdatePrediction()
 	m_GameWorld.m_WorldConfig.m_NoWeakHookAndBounce = m_GameInfo.m_NoWeakHookAndBounce;
 	m_GameWorld.m_WorldConfig.m_PredictEvents = m_GameInfo.m_PredictEvents;
 	m_GameWorld.m_WorldConfig.m_OldLaser = m_GameInfo.m_OldLaser;
+	m_GameWorld.m_Core.m_RngSeed = m_GameInfo.m_RngSeed;
 
 	if(!m_Snap.m_pLocalCharacter)
 	{
@@ -3825,10 +3829,12 @@ void CGameClient::UpdateRenderedCharacters()
 
 			m_aClients[i].m_IsPredicted = true;
 
+			// Don't interpolate across the map when the tee was teleported, jump straight to the new position instead
+			const float IntraTick = m_aClients[i].m_Predicted.m_CanSkipInterpolation ? 1.0f : Client()->PredIntraGameTick(g_Config.m_ClDummy);
 			Pos = mix(
 				vec2(m_aClients[i].m_RenderPrev.m_X, m_aClients[i].m_RenderPrev.m_Y),
 				vec2(m_aClients[i].m_RenderCur.m_X, m_aClients[i].m_RenderCur.m_Y),
-				m_aClients[i].m_IsPredicted ? Client()->PredIntraGameTick(g_Config.m_ClDummy) : Client()->IntraGameTick(g_Config.m_ClDummy));
+				IntraTick);
 
 			if(i == m_Snap.m_LocalClientId || IsDummy)
 			{

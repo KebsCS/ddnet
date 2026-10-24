@@ -175,6 +175,7 @@ private:
 	static bool IsSwitchActiveCb(unsigned char Number, void *pUser);
 	void SetTimeCheckpoint(int TimeCheckpoint);
 	void HandleTiles(int Index);
+	int RandomTeleOut(int NumTeleOuts, int MapIndex);
 	float m_Time;
 	int m_LastBroadcast;
 	void DDRaceInit();

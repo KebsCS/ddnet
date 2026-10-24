@@ -69,6 +69,7 @@ public:
 	bool Freeze();
 	bool Unfreeze();
 	void GiveAllWeapons();
+	void ResetPickups();
 	int Team();
 	bool CanCollide(int ClientId) override;
 	bool SameTeam(int ClientId);
@@ -176,6 +177,7 @@ private:
 
 	static bool IsSwitchActiveCb(unsigned char Number, void *pUser);
 	void HandleTiles(int Index);
+	int RandomTeleOut(int NumTeleOuts, int MapIndex);
 	void HandleSkippableTiles(int Index);
 	void DDRaceTick();
 	void DDRacePostCoreTick();

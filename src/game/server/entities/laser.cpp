@@ -10,6 +10,7 @@
 #include <generated/protocol.h>
 
 #include <game/mapitems.h>
+#include <game/random_hash.h>
 #include <game/server/gamecontext.h>
 #include <game/server/gamemodes/ddnet.h>
 #include <game/server/player.h>
@@ -25,6 +26,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Dir = Direction;
 	m_Bounces = 0;
 	m_EvalTick = 0;
+	m_FireTick = Server()->Tick();
 	m_TelePos = vec2(0, 0);
 	m_WasTele = false;
 	m_Type = Type;
@@ -114,7 +116,7 @@ void CLaser::DoBounce()
 	vec2 Coltile;
 
 	int Res;
-	int z;
+	int Tele;
 
 	if(m_WasTele)
 	{
@@ -125,7 +127,7 @@ void CLaser::DoBounce()
 
 	vec2 To = m_Pos + m_Dir * m_Energy;
 
-	Res = GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To, &z);
+	Res = GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To, &Tele);
 
 	if(Res)
 	{
@@ -164,10 +166,18 @@ void CLaser::DoBounce()
 			}
 			m_ZeroEnergyBounceInLastTick = Distance == 0.0f;
 
-			if(Res == TILE_TELEINWEAPON && !GameServer()->Collision()->TeleOuts(z - 1).empty())
+			if(Res == TILE_TELEINWEAPON && !GameServer()->Collision()->TeleOuts(Tele - 1).empty())
 			{
-				int TeleOut = GameServer()->m_World.m_Core.RandomOr0(GameServer()->Collision()->TeleOuts(z - 1).size());
-				m_TelePos = GameServer()->Collision()->TeleOuts(z - 1)[TeleOut];
+				// The client predicts the same result in its own CLaser::DoBounce
+				const int NumTeleOuts = GameServer()->Collision()->TeleOuts(Tele - 1).size();
+				const int RngSeed = GameServer()->m_World.m_Core.m_RngSeed;
+				const int MapIndex = GameServer()->Collision()->GetPureMapIndex(Coltile);
+				int TeleOut;
+				if(m_Owner >= 0)
+					TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::LASER_TELEPORT, {m_Owner, m_FireTick, Server()->Tick(), MapIndex});
+				else
+					TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::UNOWNED_LASER_TELEPORT, {GetId().value_or(-1), Server()->Tick(), MapIndex});
+				m_TelePos = GameServer()->Collision()->TeleOuts(Tele - 1)[TeleOut];
 				m_WasTele = true;
 			}
 			else

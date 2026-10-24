@@ -18,6 +18,7 @@
 #include <generated/server_data.h>
 
 #include <game/mapitems.h>
+#include <game/random_hash.h>
 #include <game/server/gamecontext.h>
 #include <game/server/gamecontroller.h>
 #include <game/server/player.h>
@@ -2028,13 +2029,13 @@ void CCharacter::HandleTiles(int Index)
 		m_LastBonus = false;
 	}
 
-	int z = Collision()->IsTeleport(MapIndex);
-	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !Collision()->TeleOuts(z - 1).empty())
+	int Teleport = Collision()->IsTeleport(MapIndex);
+	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && Teleport && !Collision()->TeleOuts(Teleport - 1).empty())
 	{
 		if(m_Core.m_Super || m_Core.m_Invincible)
 			return;
-		int TeleOut = GameWorld()->m_Core.RandomOr0(Collision()->TeleOuts(z - 1).size());
-		m_Core.m_Pos = Collision()->TeleOuts(z - 1)[TeleOut];
+		int TeleOut = RandomTeleOut(Collision()->TeleOuts(Teleport - 1).size(), MapIndex);
+		m_Core.m_Pos = Collision()->TeleOuts(Teleport - 1)[TeleOut];
 		if(!g_Config.m_SvTeleportHoldHook)
 		{
 			ResetHook();
@@ -2048,7 +2049,7 @@ void CCharacter::HandleTiles(int Index)
 	{
 		if(m_Core.m_Super || m_Core.m_Invincible)
 			return;
-		int TeleOut = GameWorld()->m_Core.RandomOr0(Collision()->TeleOuts(EvilTeleport - 1).size());
+		int TeleOut = RandomTeleOut(Collision()->TeleOuts(EvilTeleport - 1).size(), MapIndex);
 		m_Core.m_Pos = Collision()->TeleOuts(EvilTeleport - 1)[TeleOut];
 		if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
 		{
@@ -2075,7 +2076,7 @@ void CCharacter::HandleTiles(int Index)
 		{
 			if(!Collision()->TeleCheckOuts(k).empty())
 			{
-				int TeleOut = GameWorld()->m_Core.RandomOr0(Collision()->TeleCheckOuts(k).size());
+				int TeleOut = RandomTeleOut(Collision()->TeleCheckOuts(k).size(), MapIndex);
 				m_Core.m_Pos = Collision()->TeleCheckOuts(k)[TeleOut];
 				m_Core.m_Vel = vec2(0, 0);
 
@@ -2112,7 +2113,7 @@ void CCharacter::HandleTiles(int Index)
 		{
 			if(!Collision()->TeleCheckOuts(k).empty())
 			{
-				int TeleOut = GameWorld()->m_Core.RandomOr0(Collision()->TeleCheckOuts(k).size());
+				int TeleOut = RandomTeleOut(Collision()->TeleCheckOuts(k).size(), MapIndex);
 				m_Core.m_Pos = Collision()->TeleCheckOuts(k)[TeleOut];
 
 				if(!g_Config.m_SvTeleportHoldHook)
@@ -2136,6 +2137,12 @@ void CCharacter::HandleTiles(int Index)
 		}
 		return;
 	}
+}
+
+int CCharacter::RandomTeleOut(int NumTeleOuts, int MapIndex)
+{
+	// The client predicts the same result in its own CCharacter::RandomTeleOut
+	return RandomHash::SeededRandomIntBelow(NumTeleOuts, GameWorld()->m_Core.m_RngSeed, RandomHash::ESource::CHARACTER_TELEPORT, {GetPlayer()->GetCid(), Server()->Tick(), MapIndex});
 }
 
 void CCharacter::HandleTuneLayer()
@@ -2298,6 +2305,7 @@ void CCharacter::DDRaceTick()
 	TrySetRescue(RESCUEMODE_AUTO);
 
 	m_Core.m_Id = GetPlayer()->GetCid();
+	m_Core.m_Tick = Server()->Tick();
 }
 
 void CCharacter::DDRacePostCoreTick()

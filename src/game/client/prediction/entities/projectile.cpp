@@ -11,6 +11,7 @@
 #include <game/client/projectile_data.h>
 #include <game/collision.h>
 #include <game/mapitems.h>
+#include <game/random_hash.h>
 
 CProjectile::CProjectile(
 	CGameWorld *pGameWorld,
@@ -33,6 +34,7 @@ CProjectile::CProjectile(
 	m_Owner = Owner;
 	m_SoundImpact = SoundImpact;
 	m_StartTick = GameWorld()->GameTick();
+	m_FireTick = m_StartTick;
 	m_Explosive = Explosive;
 
 	m_Layer = Layer;
@@ -158,6 +160,32 @@ void CProjectile::Tick()
 		}
 		m_MarkedForDestroy = true;
 	}
+	if(m_MarkedForDestroy)
+		return;
+
+	// teleporters can only be predicted if the server tells us how it picks the teleporter outs
+	const int RngSeed = GameWorld()->m_Core.m_RngSeed;
+	if(RngSeed < 0)
+		return;
+
+	int MapIndex = Collision()->GetIndex(PrevPos, CurPos);
+	int Tele;
+	if(g_Config.m_SvOldTeleportWeapons)
+		Tele = Collision()->IsTeleport(MapIndex);
+	else
+		Tele = Collision()->IsTeleportWeapon(MapIndex);
+	if(Tele && !Collision()->TeleOuts(Tele - 1).empty())
+	{
+		// Must match the server's CProjectile::Tick
+		const int NumTeleOuts = Collision()->TeleOuts(Tele - 1).size();
+		int TeleOut;
+		if(m_Owner >= 0)
+			TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::PROJECTILE_TELEPORT, {m_Owner, m_FireTick, GameWorld()->GameTick(), MapIndex});
+		else
+			TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::UNOWNED_PROJECTILE_TELEPORT, {m_Id, GameWorld()->GameTick(), MapIndex});
+		m_Pos = Collision()->TeleOuts(Tele - 1)[TeleOut];
+		m_StartTick = GameWorld()->GameTick();
+	}
 }
 
 // DDRace
@@ -188,6 +216,7 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Id, const CProjectileData *
 	}
 	m_Type = pProj->m_Type;
 	m_StartTick = pProj->m_StartTick;
+	m_FireTick = pProj->m_FireTick;
 	m_TuneZone = pProj->m_TuneZone;
 
 	int Lifetime = 20 * GameWorld()->GameTickSpeed();
@@ -218,6 +247,7 @@ CProjectileData CProjectile::GetData() const
 	Result.m_StartVel = m_Direction;
 	Result.m_Type = m_Type;
 	Result.m_StartTick = m_StartTick;
+	Result.m_FireTick = m_FireTick;
 	Result.m_ExtraInfo = true;
 	Result.m_Owner = m_Owner;
 	Result.m_Explosive = m_Explosive;

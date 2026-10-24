@@ -42,6 +42,9 @@ private:
 	int m_Type;
 	int m_SoundImpact;
 	int m_StartTick;
+	// Tick in which the projectile was created, unlike `m_StartTick` it doesn't change when bouncing or teleporting.
+	// A character can only fire one projectile per tick, so the owner and this tick identify a projectile.
+	int m_FireTick;
 	bool m_Explosive;
 
 	// DDRace

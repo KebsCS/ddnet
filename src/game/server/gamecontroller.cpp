@@ -645,6 +645,7 @@ void IGameController::Snap(int SnappingClient)
 	GameInfoEx.m_MinTeamSize = g_Config.m_SvMinTeamSize;
 	GameInfoEx.m_MaxTeamSize = g_Config.m_SvMaxTeamSize;
 	GameInfoEx.m_NumDDRaceTeams = NUM_DDRACE_TEAMS;
+	GameInfoEx.m_RngSeed = GameServer()->m_World.m_Core.m_RngSeed;
 	Server()->SnapNewItem(0, GameInfoEx);
 
 	if(Server()->IsSixup(SnappingClient))

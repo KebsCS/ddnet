@@ -31,6 +31,9 @@ private:
 	float m_Energy;
 	int m_Bounces;
 	int m_EvalTick;
+	// Tick in which the laser was created, unlike `m_EvalTick` it doesn't change when bouncing or teleporting.
+	// A character can only fire one laser per tick, so the owner and this tick identify a laser.
+	int m_FireTick;
 	int m_Owner;
 	bool m_ZeroEnergyBounceInLastTick;
 	CInteractions m_InteractState;

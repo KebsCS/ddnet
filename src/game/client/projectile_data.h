@@ -17,6 +17,8 @@ public:
 	vec2 m_StartVel;
 	int m_Type;
 	int m_StartTick;
+	// Unlike m_StartTick, this isn't reset when the projectile bounces or teleports
+	int m_FireTick;
 	bool m_ExtraInfo;
 	// The rest is only set if m_ExtraInfo is true.
 	int m_Owner;

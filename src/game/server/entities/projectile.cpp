@@ -9,6 +9,7 @@
 #include <generated/protocol.h>
 
 #include <game/mapitems.h>
+#include <game/random_hash.h>
 #include <game/server/gamecontext.h>
 #include <game/server/gamemodes/ddnet.h>
 
@@ -34,6 +35,7 @@ CProjectile::CProjectile(
 	m_Owner = Owner;
 	m_SoundImpact = SoundImpact;
 	m_StartTick = Server()->Tick();
+	m_FireTick = m_StartTick;
 	m_Explosive = Explosive;
 
 	m_Layer = Layer;
@@ -238,16 +240,23 @@ void CProjectile::Tick()
 		return;
 	}
 
-	int x = GameServer()->Collision()->GetIndex(PrevPos, CurPos);
-	int z;
+	int MapIndex = GameServer()->Collision()->GetIndex(PrevPos, CurPos);
+	int Tele;
 	if(g_Config.m_SvOldTeleportWeapons)
-		z = GameServer()->Collision()->IsTeleport(x);
+		Tele = GameServer()->Collision()->IsTeleport(MapIndex);
 	else
-		z = GameServer()->Collision()->IsTeleportWeapon(x);
-	if(z && !GameServer()->Collision()->TeleOuts(z - 1).empty())
+		Tele = GameServer()->Collision()->IsTeleportWeapon(MapIndex);
+	if(Tele && !GameServer()->Collision()->TeleOuts(Tele - 1).empty())
 	{
-		int TeleOut = GameServer()->m_World.m_Core.RandomOr0(GameServer()->Collision()->TeleOuts(z - 1).size());
-		m_Pos = GameServer()->Collision()->TeleOuts(z - 1)[TeleOut];
+		// The client predicts the same result in its own CProjectile::Tick
+		const int NumTeleOuts = GameServer()->Collision()->TeleOuts(Tele - 1).size();
+		const int RngSeed = GameServer()->m_World.m_Core.m_RngSeed;
+		int TeleOut;
+		if(m_Owner >= 0)
+			TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::PROJECTILE_TELEPORT, {m_Owner, m_FireTick, Server()->Tick(), MapIndex});
+		else
+			TeleOut = RandomHash::SeededRandomIntBelow(NumTeleOuts, RngSeed, RandomHash::ESource::UNOWNED_PROJECTILE_TELEPORT, {GetId().value_or(-1), Server()->Tick(), MapIndex});
+		m_Pos = GameServer()->Collision()->TeleOuts(Tele - 1)[TeleOut];
 		m_StartTick = Server()->Tick();
 	}
 }
@@ -360,6 +369,7 @@ CNetObj_DDNetProjectile CProjectile::NetInfo(int SnappingClient)
 	Result.m_SwitchNumber = m_Number;
 	Result.m_TuneZone = m_TuneZone;
 	Result.m_Flags = Flags;
+	Result.m_FireTick = m_FireTick;
 	return Result;
 }
 
